@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>指定緊急避難所マップ</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 名古屋市付近を中心に地図を初期化
+        const map = L.map('map').setView([35.1815, 136.9064], 12);
+
+        // 国土地理院のタイルレイヤーを追加
+        L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+            attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.gif">国土地理院</a>'
+        }).addTo(map);
+
+// --- ① GeoJSONの読み込み（これまで実装した部分） ---
+        fetch('/static/shelters.geojson')
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    onEachFeature: function (feature, layer) {
+                        const props = feature.properties;
+                        let name = props["施設・場所名"] || props.名称 || props.施設名 || '名称不明';
+                        
+                        let popupContent = `<strong>${name}</strong><br>`;
+                        if (props.住所) popupContent += `住所: ${props.住所}<br>`;
+                        
+                        let hazards = [];
+                        if (props.洪水 === "1") hazards.push("洪水");
+                        if (props.津波 === "1") hazards.push("津波");
+                        if (props.地震 === "1") hazards.push("地震");
+                        if (props.内水氾濫 === "1") hazards.push("内水氾濫");
+                        if (props.高潮 === "1") hazards.push("高潮");
+                        if (props.大規模な火事 === "1") hazards.push("大規模な火事");
+                        if (props.崖崩れ・土石流及び地滑り === "1") hazards.push("土砂災害");
+                        
+                        if (hazards.length > 0) {
+                            popupContent += `<small>対応災害: ${hazards.join(', ')}</small>`;
+                        }
+
+                        layer.bindPopup(popupContent);
+                    }
+                }).addTo(map);
+            })
+            .catch(err => console.error('GeoJSONの読み込みに失敗しました:', err));
+
+
+        // --- ② 現在地取得機能（GPS）の追加 ---
+
+        // ブラウザが位置情報取得に対応しているか確認
+        if ("geolocation" in navigator) {
+            // 現在地ボタンを画面上に作成するカスタムコントロール
+            const LocateControl = L.Control.extend({
+                options: {
+                    position: 'topleft' // ボタンの位置（左上）
+                },
+                onAdd: function (map) {
+                    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+                    const button = L.DomUtil.create('a', '', container);
+                    button.innerHTML = '📍'; // ボタンのアイコン（絵文字）
+                    button.href = '#';
+                    button.title = '現在地を表示';
+                    button.style.fontSize = '18px';
+                    button.style.textAlign = 'center';
+                    button.style.textDecoration = 'none';
+                    button.style.lineHeight = '30px';
+                    button.style.width = '30px';
+                    button.style.height = '30px';
+                    button.style.display = 'block';
+                    button.style.backgroundColor = 'white';
+
+                    // ボタンをクリックしたときの処理
+                    L.DomEvent.on(button, 'click', function (e) {
+                        L.DomEvent.preventDefault(e);
+                        
+                        // ブラウザに位置情報の許可を求めて取得
+                        map.locate({setView: true, maxZoom: 16});
+                    });
+
+                    return container;
+                }
+            });
+
+            // マップに現在地ボタンを追加
+            map.addControl(new LocateControl());
+
+            // 位置情報が正常に取得できたときのイベント
+            map.on('locationfound', function (e) {
+                const radius = e.accuracy / 2; // 精度（半径メートル）
+
+                // 現在地に青いマーカーと精度を示す円を表示
+                L.marker(e.latlng).addTo(map)
+                    .bindPopup(`現在地から約 ${Math.round(radius)}m 以内にいます`).openPopup();
+                L.circle(e.latlng, radius).addTo(map);
+            });
+
+            // 位置情報の取得に失敗した場合のイベント
+            map.on('locationerror', function (e) {
+                alert("現在地を取得できませんでした。ブラウザの位置情報の権限やGPS設定をご確認ください。");
+            });
+
+        } else {
+            console.log("このブラウザは位置情報取得に対応していません。");
+        }
+    </script>
+</body>
+</html>
