@@ -107,14 +107,6 @@ async function loadShelters() {
     }
 }
 
-//避難所の半径を表示する
-L.circle([shelter.longitude,shelter.latitude],{
-    color:'red',
-    fillColor:'#f00',
-    fillOpacity:0.2,
-    radius:1000
-})
-
 // 混雑状況を判定する
 function getCrowdingInfo(status) {
     const people = Number(status.current_people) || 0;
@@ -347,6 +339,20 @@ function addLocateControl() {
             .openPopup();
 
         L.circle(event.latlng, radius).addTo(map);
+
+        //避難所の円を設定
+        const bounds=L.circle(event.latlng,{
+            radius:5000
+        }).getBounds();
+
+        if(bounds.contains(shelter.longitude,shelter.latitude)){
+            L.circle([shelter.longitude,shelter.latitude],{
+            color:'red',
+            fillColor:'#f00',
+            fillOpacity:0.2,
+            radius:1000
+            })
+        }
     });
 
 
