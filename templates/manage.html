@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>避難所管理画面</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/manage.css') }}">
+</head>
+<body>
+
+    <header class="header">
+        <div>
+            <h1>避難所管理画面</h1>
+            <p>避難人数・物資の状況を確認、更新できます。</p>
+        </div>
+
+        <a href="/" class="map-link">地図画面へ戻る</a>
+    </header>
+
+    <main class="container">
+
+        <div class="summary">
+            <div class="summary-card">
+                <span>避難所数</span>
+                <strong id="shelter-count">0</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>避難者合計</span>
+                <strong id="people-count">0</strong>
+            </div>
+
+            <div class="summary-card">
+                <span>満員の避難所</span>
+                <strong id="full-count">0</strong>
+            </div>
+        </div>
+
+        <section class="table-section">
+
+            <h2>避難所一覧</h2>
+
+            <div class="search-area">
+                <input
+                    type="text"
+                    id="search-input"
+                    placeholder="避難所名・住所で検索"
+                >
+
+                <button id="reload-button">再読み込み</button>
+            </div>
+
+            <p id="loading">避難所情報を読み込んでいます...</p>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>避難所名</th>
+                            <th>混雑状況</th>
+                            <th>避難人数</th>
+                            <th>収容人数</th>
+                            <th>水（L）</th>
+                            <th>非常食（食）</th>
+                            <th>毛布（枚）</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="shelter-table-body">
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- 編集画面 -->
+    <div id="edit-modal" class="modal hidden">
+
+        <div class="modal-content">
+
+            <h2>避難所情報の編集</h2>
+
+            <p id="edit-shelter-name"></p>
+
+            <input type="hidden" id="edit-common-id">
+
+            <label>
+                避難人数（人）
+                <input type="number" id="edit-people" min="0">
+            </label>
+
+            <label>
+                収容人数（人）
+                <input type="number" id="edit-capacity" min="0">
+            </label>
+
+            <label>
+                水（L）
+                <input type="number" id="edit-water" min="0">
+            </label>
+
+            <label>
+                非常食（食）
+                <input type="number" id="edit-food" min="0">
+            </label>
+
+            <label>
+                毛布（枚）
+                <input type="number" id="edit-blanket" min="0">
+            </label>
+
+            <div class="modal-buttons">
+                <button id="cancel-button" class="cancel-button">
+                    キャンセル
+                </button>
+
+                <button id="save-button" class="save-button">
+                    更新する
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/manage.js') }}"></script>
+
+</body>
+</html>
