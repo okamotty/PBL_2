@@ -1,0 +1,179 @@
+/* ページ全体 */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+}
+
+/* ヘッダー */
+.header {
+    height: 70px;
+    padding: 10px 20px;
+    background-color: #2c6e91;
+    color: white;
+    box-sizing: border-box;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 22px;
+}
+
+.header p {
+    margin: 5px 0 0;
+    font-size: 12px;
+}
+
+/* 地図 */
+#map {
+    width: 100%;
+    height: calc(100vh - 70px);
+}
+
+/* 読み込み中の表示 */
+.loading {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+
+    padding: 10px 20px;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+
+    font-size: 14px;
+}
+
+/* 読み込み完了後 */
+.loading.hidden {
+    display: none;
+}
+
+/* 避難所ポップアップ */
+.shelter-popup {
+    min-width: 210px;
+}
+
+.shelter-popup h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.shelter-popup p {
+    margin: 5px 0;
+    font-size: 13px;
+}
+
+.shelter-popup hr {
+    margin: 8px 0;
+}
+
+.update-button:hover {
+    background-color: #0056b3;
+}
+
+/* スマートフォン対応 */
+@media screen and (max-width: 600px) {
+    .header h1 {
+        font-size: 18px;
+    }
+
+    .header p {
+        font-size: 11px;
+    }
+}
+
+/* 混雑状況マーカー */
+.shelter-div-icon {
+    background: transparent;
+    border: none;
+}
+
+.shelter-marker {
+    width: 14px;
+    height: 14px;
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.5);
+}
+
+/* 空きあり：緑 */
+.shelter-marker.available {
+    background-color: #2ead68;
+}
+
+/* やや混雑：黄 */
+.shelter-marker.crowded {
+    background-color: #e8ac27;
+}
+
+/* 満員：赤 */
+.shelter-marker.full {
+    background-color: #e34b4b;
+}
+
+/* 収容人数未設定：灰 */
+.shelter-marker.unknown {
+    background-color: #9299a3;
+}
+
+/* 地図上の凡例 */
+.crowding-legend {
+    padding: 10px 14px;
+    background-color: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.3);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.legend-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.legend-available {
+    background-color: #2ead68;
+}
+
+.legend-crowded {
+    background-color: #e8ac27;
+}
+
+.legend-full {
+    background-color: #e34b4b;
+}
+
+.legend-unknown {
+    background-color: #9299a3;
+}
+
+.manage-link {
+    display: inline-block;
+    padding: 8px 14px;
+    background-color: white;
+    color: #2c6e91;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+.manage-link:hover {
+    background-color: #e8f1f5;
+}
