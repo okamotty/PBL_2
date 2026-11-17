@@ -108,12 +108,12 @@ async function loadShelters() {
 }
 
 //避難所の半径を表示する
-L.circle([35.1815, 136.9064],{
+L.circle([shelter.longitude,shelter.latitude],{
     color:'red',
     fillColor:'#f00',
     fillOpacity:0.2,
     radius:1000
-}).addTo(map);
+})
 
 // 混雑状況を判定する
 function getCrowdingInfo(status) {
