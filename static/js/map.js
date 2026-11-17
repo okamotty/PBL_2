@@ -107,6 +107,14 @@ async function loadShelters() {
     }
 }
 
+//避難所の半径を表示する
+L.circle([shelter.longitude,shelter.latitude],{
+    color:'red',
+    fillColor:'#f00',
+    fillOpacity:0.2,
+    radius:1000
+}).addTo(map);
+
 // 混雑状況を判定する
 function getCrowdingInfo(status) {
     const people = Number(status.current_people) || 0;
