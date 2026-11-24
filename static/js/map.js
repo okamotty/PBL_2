@@ -355,7 +355,7 @@ function addLocateControl() {
             fillColor:'#f00',
             fillOpacity:0.2,
             radius:1000
-            })
+            }).addTo(map);
         };
     });
 
