@@ -342,8 +342,8 @@ function addLocateControl() {
 
         //避難所の円を設定
         const bounds=L.circle(event.latlng,{
-            radius:5000
-        }).getBounds(map);
+            radius:10000
+        })
 
         if(bounds.contains(shelter.longitude,shelter.latitude)){
             L.circle([shelter.longitude,shelter.latitude],{
