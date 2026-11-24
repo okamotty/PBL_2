@@ -274,6 +274,20 @@ function displayShelters(geojson, statusData) {
     shelterLayer.addTo(map);
 }
 
+//追加実験用
+const testCurrent = L.latLng(
+    event.latlng.lat,
+    event.latlng.lng
+);
+const testShelter = L.latLng(
+    35.111092,
+    136.792548
+);
+console.log(
+    'テスト距離:',
+    testCurrent.distanceTo(testShelter)
+);
+
 
 // ========================================
 // 現在地取得機能
@@ -555,16 +569,3 @@ addCrowdingLegend();
 
 // 避難所データを読み込む
 loadShelters();
-
-const testCurrent = L.latLng(
-    event.latlng.lat,
-    event.latlng.lng
-);
-const testShelter = L.latLng(
-    35.111092,
-    136.792548
-);
-console.log(
-    'テスト距離:',
-    testCurrent.distanceTo(testShelter)
-);
