@@ -1,0 +1,64 @@
+/* 管理系の入力画面（人数変更・物資更新）で共通して使う色と文字 */
+:root {
+    --font-ud: "BIZ UDGothic", "Hiragino Sans", "Yu Gothic", sans-serif;
+
+    --navy: #1e3a5f;
+    --blue: #2563eb;
+    --page-bg: #eff6ff;
+    --soft-bg: #eff5fa;
+    --input-bg: #f9fbff;
+
+    --text-strong: #1e293b;
+    --text-main: #222222;
+    --text-sub: #666666;
+    --text-muted: #99a6b8;
+    --text-label: #3c4963;
+    --text-cancel: #64748b;
+    --text-on-navy-sub: #b2cce5;
+
+    --line: #d9d9d9;
+    --line-soft: #d0e0f7;
+    --track: #e5eaf4;
+
+    --ok: #22c55e;
+    --ok-bg: #dcfce7;
+    --ok-text: #15803d;
+    --warn: #f59e0b;
+    --warn-bg: #fff5e0;
+    --warn-chip-bg: #feefd7;
+    --warn-text: #b86800;
+    --danger: #ef4444;
+    --danger-bg: #fee1e1;
+    --danger-text: #bc1313;
+    --none: #94a3b8;
+    --none-bg: #e5eaf4;
+    --none-text: #64748b;
+
+    --chip-plus-bg: #e0efff;
+    --chip-minus-bg: #ffefef;
+
+    --shadow-button: 0 6px 16px rgba(30, 58, 95, 0.35);
+    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.07);
+}
+
+/* 画面幅で出し分ける要素 */
+@media screen and (max-width: 700px) {
+    .pc-only {
+        display: none !important;
+    }
+}
+
+@media screen and (min-width: 701px) {
+    .sp-only {
+        display: none !important;
+    }
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}

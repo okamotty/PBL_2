@@ -148,71 +148,373 @@ th {
     color: #555;
 }
 
+.action-cell {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+}
+
 .edit-button {
     background-color: #2c6e91;
     color: white;
 }
 
-.modal {
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 15px;
-    background-color: rgba(0,0,0,0.5);
+.supplies-link {
+    padding: 9px 14px;
+    border: 1px solid #2c6e91;
+    border-radius: 5px;
+    color: #2c6e91;
+    text-decoration: none;
+    font-size: 13px;
 }
 
 .hidden {
     display: none !important;
 }
 
-.modal-content {
-    width: 100%;
-    max-width: 420px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-sizing: border-box;
-    padding: 25px;
-    background-color: white;
-    border-radius: 10px;
+/* ===== 人数変更画面 ===== */
+
+body.modal-open {
+    overflow: hidden;
 }
 
-.modal-content h2 {
+.people-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    background-color: rgba(15, 27, 48, 0.52);
+    font-family: var(--font-ud);
+}
+
+.people-modal button {
+    padding: 0;
+    font-family: inherit;
+}
+
+.people-dialog {
+    width: 100%;
+    max-width: 560px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    background-color: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.people-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    padding: 0 18px 0 28px;
+    background-color: var(--navy);
+    color: white;
+}
+
+.people-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.people-close {
+    width: 32px;
+    height: 32px;
+    background: none;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.people-body {
+    padding: 16px 28px 22px;
+}
+
+/* 現在の状況 */
+.people-current {
+    --level-color: var(--none);
+    position: relative;
+    padding: 12px 16px 10px;
+    background-color: var(--soft-bg);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.people-current::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 0;
+    width: 4px;
+    border-radius: 2px;
+    background-color: var(--level-color);
+}
+
+.people-current[data-level="available"] { --level-color: var(--ok); }
+.people-current[data-level="crowded"]   { --level-color: var(--warn); }
+.people-current[data-level="full"]      { --level-color: var(--danger); }
+
+.people-current-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.people-shelter-name {
+    margin: 0;
+    color: var(--text-strong);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.people-badge {
+    flex-shrink: 0;
+    min-width: 80px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    border-radius: 13px;
+    background-color: var(--none-bg);
+    color: var(--none-text);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.people-badge[data-level="available"] { background-color: var(--ok-bg);     color: var(--ok-text); }
+.people-badge[data-level="crowded"]   { background-color: var(--warn-bg);   color: var(--warn-text); }
+.people-badge[data-level="full"]      { background-color: var(--danger-bg); color: var(--danger-text); }
+
+.people-current-bottom {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 6px;
+}
+
+.people-count {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+}
+
+.people-count strong {
+    min-width: 100px;
+    color: var(--text-strong);
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.people-count span {
+    color: var(--text-muted);
+    font-size: 18px;
+}
+
+.people-meter {
+    width: 220px;
     margin-top: 0;
 }
 
-.modal-content label {
+.people-meter-track {
+    height: 8px;
+    border-radius: 4px;
+    background-color: var(--track);
+    overflow: hidden;
+}
+
+.people-meter-fill {
+    width: 0;
+    height: 100%;
+    border-radius: 4px;
+    background-color: var(--level-color);
+}
+
+.people-meter-rate {
+    margin: 8px 0 0;
+    color: var(--warn-text);
+    font-size: 13px;
+    font-weight: 700;
+    text-align: right;
+}
+
+.people-current[data-level="available"] .people-meter-rate { color: var(--ok-text); }
+.people-current[data-level="full"] .people-meter-rate      { color: var(--danger-text); }
+.people-current[data-level="unknown"] .people-meter-rate   { color: var(--none-text); }
+
+/* 新しい避難者数 */
+.people-editor {
+    margin-top: 20px;
+}
+
+.people-section-title,
+.people-field-label {
     display: block;
-    margin-top: 15px;
+    color: var(--text-label);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.people-stepper {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.step-button {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px !important;
+    background-color: var(--navy);
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.people-input {
+    width: 120px;
+    height: 72px;
+    box-sizing: border-box;
+    border: 2px solid var(--line-soft);
+    border-radius: 12px;
+    background-color: var(--soft-bg);
+    color: var(--text-strong);
+    font-family: inherit;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.people-input::-webkit-outer-spin-button,
+.people-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.people-input:focus,
+.people-field input:focus {
+    outline: none;
+    border-color: var(--blue);
+}
+
+.people-hint {
+    margin: 10px 0 0;
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: center;
+}
+
+.people-chips {
+    display: grid;
+    grid-template-columns: repeat(3, 148px);
+    gap: 8px 10px;
+    margin-top: 14px;
+}
+
+.people-chip {
+    height: 34px;
+    border-radius: 17px !important;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.people-chip.plus {
+    background-color: var(--chip-plus-bg);
+    color: var(--blue);
+}
+
+.people-chip.minus {
+    background-color: var(--chip-minus-bg);
+    color: var(--danger-text);
+}
+
+/* 収容人数 */
+.people-field-label {
+    margin-top: 18px;
     font-size: 14px;
 }
 
-.modal-content input {
-    display: block;
-    width: 100%;
-    box-sizing: border-box;
-    margin-top: 5px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-.modal-buttons {
+.people-field {
     display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 25px;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    color: var(--text-label);
+    font-size: 14px;
 }
 
-.cancel-button {
-    background-color: #ddd;
+.people-field input {
+    width: 160px;
+    height: 48px;
+    box-sizing: border-box;
+    padding: 0 14px;
+    border: 1.5px solid var(--line-soft);
+    border-radius: 10px;
+    background-color: var(--input-bg);
+    color: var(--text-strong);
+    font-family: inherit;
+    font-size: 16px;
 }
 
-.save-button {
-    background-color: #2c6e91;
+.people-note {
+    margin: 16px 0 0;
+    padding: 14px 10px;
+    border-radius: 10px;
+    background-color: var(--warn-bg);
+    color: var(--warn-text);
+    font-size: 11px;
+    text-align: center;
+}
+
+/* ボタン */
+.people-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    margin-top: 18px;
+}
+
+.people-cancel,
+.people-save {
+    height: 52px;
+    border-radius: 12px !important;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.people-cancel {
+    background-color: var(--soft-bg);
+    color: var(--text-cancel);
+}
+
+.people-save {
+    background-color: var(--blue);
     color: white;
+    box-shadow: var(--shadow-button);
+}
+
+.people-save:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.step-button:focus-visible,
+.people-chip:focus-visible,
+.people-cancel:focus-visible,
+.people-save:focus-visible,
+.people-close:focus-visible,
+.people-back:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 2px;
 }
 
 #loading {
@@ -236,5 +538,188 @@ th {
 
     .table-section {
         padding: 12px;
+    }
+
+    /* 人数変更画面はスマホでは全画面にする */
+    .people-modal {
+        padding: 0;
+        background-color: var(--soft-bg);
+    }
+
+    .people-dialog {
+        max-width: none;
+        height: 100%;
+        max-height: none;
+        border-radius: 0;
+        background-color: var(--soft-bg);
+        box-shadow: none;
+    }
+
+    .people-header {
+        justify-content: center;
+        height: 60px;
+        padding: 0 48px;
+    }
+
+    .people-header h2 {
+        font-size: 17px;
+    }
+
+    .people-back {
+        position: absolute;
+        left: 8px;
+        width: 40px;
+        height: 40px;
+        background: none;
+        color: white;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .people-body {
+        max-width: 390px;
+        margin: 0 auto;
+        padding: 20px 20px 32px;
+    }
+
+    .people-current {
+        padding: 12px 16px;
+        background-color: white;
+        border-radius: 16px;
+        box-shadow: var(--shadow-card);
+    }
+
+    .people-current::before {
+        top: 12px;
+        bottom: 12px;
+    }
+
+    .people-current-top {
+        justify-content: space-between;
+    }
+
+    .people-shelter-name {
+        font-size: 20px;
+    }
+
+    .people-badge {
+        min-width: 72px;
+        padding: 6px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+    }
+
+    .people-current-label {
+        margin: 6px 0 0;
+        color: var(--text-muted);
+        font-size: 13px;
+    }
+
+    .people-current-bottom {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+        margin-top: 4px;
+    }
+
+    .people-count strong {
+        min-width: 80px;
+        font-size: 28px;
+    }
+
+    .people-count span {
+        font-size: 16px;
+    }
+
+    .people-meter {
+        width: 100%;
+    }
+
+    .people-meter-rate {
+        margin-top: 6px;
+        font-size: 11px;
+        font-weight: 400;
+    }
+
+    .people-editor {
+        padding: 20px 12px 8px;
+        background-color: white;
+        border-radius: 16px;
+        box-shadow: var(--shadow-card);
+    }
+
+    .people-section-title {
+        padding-left: 8px;
+        color: var(--text-strong);
+        font-size: 14px;
+    }
+
+    .people-stepper {
+        justify-content: center;
+        margin-top: 12px;
+    }
+
+    .step-button {
+        width: 50px;
+        height: 60px;
+        border-radius: 10px !important;
+        font-size: 16px;
+    }
+
+    .people-input {
+        width: 80px;
+        height: 60px;
+        font-size: 24px;
+    }
+
+    .people-chips {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px 10px;
+        margin-top: 10px;
+    }
+
+    .people-chip {
+        height: 28px;
+        border-radius: 14px !important;
+        font-size: 12px;
+    }
+
+    .people-field-label {
+        margin-top: 22px;
+        font-size: 13px;
+    }
+
+    .people-field input {
+        flex: 1;
+        width: auto;
+        border-radius: 12px;
+        background-color: white;
+    }
+
+    .people-actions {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-top: 14px;
+    }
+
+    .people-save {
+        order: 1;
+        height: 54px;
+        border-radius: 14px !important;
+        font-size: 16px;
+    }
+
+    .people-cancel {
+        order: 2;
+        justify-self: center;
+        width: 297px;
+        max-width: 100%;
+        height: 49px;
+        border-radius: 14px !important;
+        background-color: #f1f7fc;
+        color: var(--text-muted);
+        font-size: 14px;
+        font-weight: 400;
+        box-shadow: var(--shadow-button);
     }
 }

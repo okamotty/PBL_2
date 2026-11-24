@@ -5,57 +5,14 @@ let shelterList = [];
 // 避難所の管理情報を保存するオブジェクト
 let statusData = {};
 
-// HTMLに表示する文字列を安全に変換
-function escapeHTML(value) {
-    return String(value ?? '').replace(/[&<>"']/g, function (char) {
-        return {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
-        }[char];
-    });
-}
-
-// 混雑状況を判定
-function getCrowdingInfo(status) {
-    const people = Number(status.current_people) || 0;
-    const capacity = Number(status.capacity) || 0;
-
-    if (capacity <= 0) {
-        return {
-            label: '未設定',
-            className: 'unknown'
-        };
-    }
-
-    const rate = people / capacity * 100;
-
-    if (rate >= 100) {
-        return {
-            label: '満員',
-            className: 'full'
-        };
-    }
-
-    if (rate >= 50) {
-        return {
-            label: 'やや混雑',
-            className: 'crowded'
-        };
-    }
-
-    return {
-        label: '空きあり',
-        className: 'available'
-    };
-}
+// 人数変更画面で編集中の避難所ID
+let editingCommonId = null;
 
 // 避難所情報を取得
 async function loadShelters() {
     const loading = document.getElementById('loading');
     loading.textContent = '避難所情報を読み込んでいます...';
+    loading.classList.remove('hidden');
 
     try {
         const [sheltersResponse, statusResponse] = await Promise.all([
@@ -111,6 +68,8 @@ function displayShelters() {
         };
 
         const crowding = getCrowdingInfo(status);
+        const suppliesUrl =
+            '/manage/supplies?id=' + encodeURIComponent(commonId);
 
         const row = document.createElement('tr');
 
@@ -129,23 +88,20 @@ function displayShelters() {
             <td>${Number(status.supplies_food) || 0}食</td>
             <td>${Number(status.supplies_blanket) || 0}枚</td>
 
-            <td>
+            <td class="action-cell">
                 <button
+                    type="button"
                     class="edit-button"
                     data-id="${escapeHTML(commonId)}">
-                    編集
+                    人数変更
                 </button>
+                <a class="supplies-link" href="${escapeHTML(suppliesUrl)}">
+                    物資更新
+                </a>
             </td>
         `;
 
         tbody.appendChild(row);
-    });
-
-    // 編集ボタンにイベントを設定
-    tbody.querySelectorAll('.edit-button').forEach(button => {
-        button.addEventListener('click', function () {
-            openEditModal(this.dataset.id);
-        });
     });
 
     updateSummary();
@@ -177,125 +133,106 @@ function updateSummary() {
         fullCount.toLocaleString();
 }
 
-// 編集画面を開く
-function openEditModal(commonId) {
+// 人数変更画面を開く
+function openPeopleModal(commonId) {
     const shelter = shelterList.find(
-        item => item.common_id === commonId
+        item => String(item.common_id) === String(commonId)
     );
 
     if (!shelter) return;
 
-    const status = statusData[commonId] || {};
+    const status = statusData[shelter.common_id] || {};
+    const people = Number(status.current_people) || 0;
+    const capacity = Number(status.capacity) || 0;
+    const crowding = getCrowdingInfo(status);
+    const rate = getUsageRate(status);
 
-    document.getElementById('edit-common-id').value = commonId;
+    editingCommonId = shelter.common_id;
 
-    document.getElementById('edit-shelter-name').textContent =
+    document.getElementById('people-current-card').dataset.level =
+        crowding.className;
+
+    document.getElementById('people-shelter-name').textContent =
         shelter.shelter_name || '名称不明';
 
-    document.getElementById('edit-people').value =
-        Number(status.current_people) || 0;
+    const badge = document.getElementById('people-badge');
+    badge.textContent = crowding.label;
+    badge.dataset.level = crowding.className;
 
-    document.getElementById('edit-capacity').value =
-        Number(status.capacity) || 0;
+    document.getElementById('people-current-count').textContent =
+        people.toLocaleString();
 
-    document.getElementById('edit-water').value =
-        Number(status.supplies_water) || 0;
+    document.getElementById('people-capacity-text').textContent =
+        capacity > 0
+            ? `/ ${capacity.toLocaleString()}人`
+            : '/ 収容人数未設定';
 
-    document.getElementById('edit-food').value =
-        Number(status.supplies_food) || 0;
+    document.getElementById('people-meter-fill').style.width =
+        `${Math.min(rate ?? 0, 100)}%`;
 
-    document.getElementById('edit-blanket').value =
-        Number(status.supplies_blanket) || 0;
+    document.getElementById('people-rate').textContent =
+        rate === null ? '—' : `${rate}%`;
 
-    document.getElementById('edit-modal').classList.remove('hidden');
+    document.getElementById('people-input').value = people;
+    document.getElementById('people-capacity-input').value = capacity;
+
+    document.getElementById('people-modal').classList.remove('hidden');
+    document.body.classList.add('modal-open');
 }
 
-// 編集画面を閉じる
-function closeEditModal() {
-    document.getElementById('edit-modal').classList.add('hidden');
+// 人数変更画面を閉じる
+function closePeopleModal() {
+    editingCommonId = null;
+    document.getElementById('people-modal').classList.add('hidden');
+    document.body.classList.remove('modal-open');
 }
 
-// 入力値を確認
-function getEditValues() {
-    const fields = [
-        'edit-people',
-        'edit-capacity',
-        'edit-water',
-        'edit-food',
-        'edit-blanket'
-    ];
+// ボタンで避難者数を増減（0未満にはしない）
+function stepPeople(amount) {
+    const input = document.getElementById('people-input');
+    const current = parseNonNegativeInt(input.value) ?? 0;
 
-    const values = {};
+    input.value = Math.max(0, current + amount);
+}
 
-    for (const fieldId of fields) {
-        const value = document.getElementById(fieldId).value;
+// 避難者数・収容人数を更新
+async function savePeople() {
+    if (editingCommonId === null) return;
 
-        if (
-            value.trim() === '' ||
-            !Number.isSafeInteger(Number(value)) ||
-            Number(value) < 0
-        ) {
-            alert('人数や物資数には0以上の整数を入力してください。');
-            return null;
-        }
+    const people = parseNonNegativeInt(
+        document.getElementById('people-input').value
+    );
+    const capacity = parseNonNegativeInt(
+        document.getElementById('people-capacity-input').value
+    );
 
-        values[fieldId] = Number(value);
+    if (people === null || capacity === null) {
+        alert('避難者数と収容人数には0以上の整数を入力してください。');
+        return;
     }
 
-    return values;
-}
-
-// 避難所情報を更新
-async function saveShelterData() {
-    const commonId = document.getElementById('edit-common-id').value;
-    const values = getEditValues();
-
-    if (!values) return;
-
-    const saveButton = document.getElementById('save-button');
+    const commonId = editingCommonId;
+    const saveButton = document.getElementById('people-save');
     saveButton.disabled = true;
     saveButton.textContent = '更新中...';
 
     try {
-        const response = await fetch('/api/status/update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                common_id: commonId,
-                current_people: values['edit-people'],
-                capacity: values['edit-capacity'],
-                supplies_water: values['edit-water'],
-                supplies_food: values['edit-food'],
-                supplies_blanket: values['edit-blanket']
-            })
+        await updateShelterStatus(commonId, {
+            current_people: people,
+            capacity: capacity
         });
-
-        if (!response.ok) {
-            throw new Error('更新に失敗しました。');
-        }
-
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error('データベースへの保存に失敗しました。');
-        }
 
         // 画面上の管理情報も更新
         statusData[commonId] = {
             ...statusData[commonId],
-            current_people: values['edit-people'],
-            capacity: values['edit-capacity'],
-            supplies_water: values['edit-water'],
-            supplies_food: values['edit-food'],
-            supplies_blanket: values['edit-blanket']
+            current_people: people,
+            capacity: capacity
         };
 
         displayShelters();
-        closeEditModal();
+        closePeopleModal();
 
-        alert('避難所情報を更新しました！');
+        alert('避難者数を更新しました！');
 
     } catch (error) {
         console.error('更新エラー:', error);
@@ -303,7 +240,7 @@ async function saveShelterData() {
 
     } finally {
         saveButton.disabled = false;
-        saveButton.textContent = '更新する';
+        saveButton.textContent = '変更を確定する';
     }
 }
 
@@ -318,15 +255,52 @@ document.getElementById('reload-button').addEventListener(
     loadShelters
 );
 
-document.getElementById('cancel-button').addEventListener(
+// 一覧の「人数変更」ボタン
+document.getElementById('shelter-table-body').addEventListener(
     'click',
-    closeEditModal
+    function (event) {
+        const button = event.target.closest('.edit-button');
+
+        if (button) {
+            openPeopleModal(button.dataset.id);
+        }
+    }
 );
 
-document.getElementById('save-button').addEventListener(
+// 人数変更画面のボタン
+document.getElementById('people-modal').addEventListener(
     'click',
-    saveShelterData
+    function (event) {
+        // 背景をクリックしたら閉じる
+        if (event.target === this) {
+            closePeopleModal();
+            return;
+        }
+
+        if (event.target.closest('[data-close-people]')) {
+            closePeopleModal();
+            return;
+        }
+
+        const stepButton = event.target.closest('[data-step]');
+
+        if (stepButton) {
+            stepPeople(Number(stepButton.dataset.step));
+        }
+    }
 );
+
+document.getElementById('people-save').addEventListener(
+    'click',
+    savePeople
+);
+
+// Escキーで人数変更画面を閉じる
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && editingCommonId !== null) {
+        closePeopleModal();
+    }
+});
 
 // 初期表示
 loadShelters();
