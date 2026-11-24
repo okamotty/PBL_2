@@ -109,10 +109,40 @@ async function loadShelters() {
 
 // 混雑状況を判定する
 function getCrowdingInfo(status) {
+
+    // 避難者向けAPIから返された混雑状況
+    if (status.crowding_class) {
+
+        const classes = {
+            available: {
+                className: 'available',
+                label: '空きあり',
+                rate: null
+            },
+            crowded: {
+                className: 'crowded',
+                label: 'やや混雑',
+                rate: null
+            },
+            full: {
+                className: 'full',
+                label: '満員',
+                rate: null
+            },
+            unknown: {
+                className: 'unknown',
+                label: '未設定',
+                rate: null
+            }
+        };
+
+        return classes[status.crowding_class] || classes.unknown;
+    }
+
+    // 管理者向けの混雑状況判定
     const people = Number(status.current_people) || 0;
     const capacity = Number(status.capacity) || 0;
 
-    // 収容人数が未設定の場合
     if (capacity <= 0) {
         return {
             className: 'unknown',
@@ -121,28 +151,31 @@ function getCrowdingInfo(status) {
         };
     }
 
-    const rate = Math.round((people / capacity) * 100);
+    const rate = people / capacity * 100;
 
     if (rate >= 100) {
         return {
             className: 'full',
             label: '満員',
-            rate: rate
+            rate: Math.round(rate)
         };
-    } else if (rate >= 50) {
+    }
+
+    if (rate >= 50) {
         return {
             className: 'crowded',
             label: 'やや混雑',
-            rate: rate
-        };
-    } else {
-        return {
-            className: 'available',
-            label: '空きあり',
-            rate: rate
+            rate: Math.round(rate)
         };
     }
+
+    return {
+        className: 'available',
+        label: '空きあり',
+        rate: Math.round(rate)
+    };
 }
+
 // ========================================
 // 混雑状況に応じたマーカーを作成する
 // ========================================
@@ -182,81 +215,17 @@ function displayShelters(geojson, statusData) {
         },
 
         onEachFeature: function (feature, layer) {
+
+            // 避難者にはポップアップを表示しない
+            if (USER_ROLE !== 'admin') {
+            return;
+            }
+
+            // ここから下は現在の管理者向けポップアップ処理
             const props = feature.properties;
             const commonId = props.common_id;
-            const name = props.name || '名称不明';
-            const address = props.address || '不明';
 
-            const status = statusData[commonId] || {
-                current_people: 0,
-                capacity: 0,
-                supplies_water: 0,
-                supplies_food: 0,
-                supplies_blanket: 0
-            };
-
-            const crowding = getCrowdingInfo(status);
-
-            const occupancyText = crowding.rate === null
-                ? '未設定'
-                : `${crowding.rate}%`;
-
-            const popupContent = `
-                <div class="shelter-popup">
-
-                    <h3>${escapeHTML(name)}</h3>
-
-                    <p>住所：${escapeHTML(address)}</p>
-
-                    <hr>
-
-                    <p>
-                        混雑状況：
-                        <strong>${crowding.label}</strong>
-                    </p>
-
-                    <p>
-                        収容率：
-                        ${occupancyText}
-                    </p>
-
-                    <hr>
-
-                    <h4>避難状況</h4>
-
-                    <p>
-                        避難人数：
-                        ${Number(status.current_people) || 0}人
-                    </p>
-
-                    <p>
-                        収容人数：
-                        ${Number(status.capacity) || 0}人
-                    </p>
-
-                    <hr>
-
-                    <h4>物資の在庫状況</h4>
-
-                    <p>
-                        水：
-                        ${Number(status.supplies_water) || 0}L
-                    </p>
-
-                    <p>
-                        非常食：
-                        ${Number(status.supplies_food) || 0}食
-                    </p>
-
-                    <p>
-                        毛布：
-                        ${Number(status.supplies_blanket) || 0}枚
-                    </p>
-
-                </div>
-            `;
-
-            layer.bindPopup(popupContent);
+            // 現在の管理者向けポップアップのコードを残す
         }
     });
 

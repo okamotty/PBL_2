@@ -14,6 +14,7 @@ import os
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from functools import wraps
+from flask import g, redirect, url_for, jsonify
 
 # .envファイルの読み込み
 load_dotenv()
@@ -48,9 +49,93 @@ supabase: Client = create_client(url, key)
 # ログイン・ユーザー登録用クライアント
 auth_supabase: Client = create_client(url, anon_key)
 
+def get_current_user():
+    if "access_token" not in session:
+        return None
+
+    try:
+        # Supabaseにアクセストークンを確認してもらう
+        response = auth_supabase.auth.get_user(
+            session["access_token"]
+        )
+
+        user = response.user
+
+        if not user:
+            return None
+
+        # ユーザーの権限を取得
+        profile = (
+            supabase.table("user_profiles")
+            .select("user_id, role, designated_shelter_id")
+            .eq("user_id", user.id)
+            .single()
+            .execute()
+        )
+
+        return {
+            "user_id": user.id,
+            "email": user.email,
+            "role": profile.data["role"],
+            "designated_shelter_id": profile.data[
+                "designated_shelter_id"
+            ]
+        }
+
+    except Exception as error:
+        print("認証確認エラー:", error)
+        session.clear()
+        return None
+
+def login_required(function):
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        current_user = get_current_user()
+
+        if current_user is None:
+            return redirect(url_for("login"))
+
+        g.current_user = current_user
+        return function(*args, **kwargs)
+
+    return wrapper
+
+
+def admin_required(function):
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        current_user = get_current_user()
+
+        if current_user is None:
+            return jsonify({
+                "success": False,
+                "message": "ログインが必要です。"
+            }), 401
+
+        if current_user["role"] != "admin":
+            return jsonify({
+                "success": False,
+                "message": "管理者権限が必要です。"
+            }), 403
+
+        g.current_user = current_user
+        return function(*args, **kwargs)
+
+    return wrapper
+
 @app.route('/')
+@login_required
 def index():
-    return render_template('index.html')
+    # 管理者は管理画面へ移動
+    if g.current_user["role"] == "admin":
+        return redirect(url_for("manage"))
+
+    # 避難者は地図画面へ移動
+    return render_template(
+        "index.html",
+        user_role=g.current_user["role"]
+    )
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
@@ -118,11 +203,18 @@ def logout():
 
 # 避難所管理画面
 @app.route('/manage')
+@login_required
 def manage():
-    return render_template('manage.html')
+
+    # 避難者は管理画面を利用できない
+    if g.current_user["role"] != "admin":
+        return redirect(url_for("index"))
+
+    return render_template("manage.html")
 
 # Supabaseから避難所の基本情報を取得するAPI
 @app.route('/api/shelters', methods=['GET'])
+@login_required
 def get_shelters():
 
     all_shelters = []
@@ -148,8 +240,11 @@ def get_shelters():
     return jsonify(all_shelters)
 
 # 各避難所のリアルタイムステータスを取得するAPI
+
 @app.route('/api/status', methods=['GET'])
+@login_required
 def get_status():
+
     all_status = []
     batch_size = 500
     start = 0
@@ -169,15 +264,41 @@ def get_status():
 
         start += batch_size
 
-    status_map = {
-        item['common_id']: item
-        for item in all_status
-    }
+    status_map = {}
+
+    for item in all_status:
+        common_id = item["common_id"]
+
+        people = int(item.get("current_people") or 0)
+        capacity = int(item.get("capacity") or 0)
+
+        # 管理者にはすべての情報を返す
+        if g.current_user["role"] == "admin":
+            status_map[common_id] = item
+            continue
+
+        # 避難者には混雑状況だけを返す
+        if capacity <= 0:
+            crowding_class = "unknown"
+        else:
+            rate = people / capacity * 100
+
+            if rate >= 100:
+                crowding_class = "full"
+            elif rate >= 50:
+                crowding_class = "crowded"
+            else:
+                crowding_class = "available"
+
+        status_map[common_id] = {
+            "crowding_class": crowding_class
+        }
 
     return jsonify(status_map)
 
 # 避難所の人数や物資を更新するAPI
 @app.route('/api/status/update', methods=['POST'])
+@admin_required
 def update_status():
     data = request.get_json()
 
@@ -224,81 +345,7 @@ def update_status():
             "message": "データの更新に失敗しました。"
         }), 500
 
-def get_current_user():
-    if "access_token" not in session:
-        return None
 
-    try:
-        # Supabaseにアクセストークンを確認してもらう
-        response = auth_supabase.auth.get_user(
-            session["access_token"]
-        )
-
-        user = response.user
-
-        if not user:
-            return None
-
-        # ユーザーの権限を取得
-        profile = (
-            supabase.table("user_profiles")
-            .select("user_id, role, designated_shelter_id")
-            .eq("user_id", user.id)
-            .single()
-            .execute()
-        )
-
-        return {
-            "user_id": user.id,
-            "email": user.email,
-            "role": profile.data["role"],
-            "designated_shelter_id": profile.data[
-                "designated_shelter_id"
-            ]
-        }
-
-    except Exception as error:
-        print("認証確認エラー:", error)
-        session.clear()
-        return None
-
-def login_required(function):
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        current_user = get_current_user()
-
-        if current_user is None:
-            return redirect(url_for("login"))
-
-        g.current_user = current_user
-
-        return function(*args, **kwargs)
-
-    return wrapper
-
-
-def admin_required(function):
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        current_user = get_current_user()
-
-        if current_user is None:
-            return jsonify({
-                "success": False,
-                "message": "ログインが必要です。"
-            }), 401
-
-        if current_user["role"] != "admin":
-            return jsonify({
-                "success": False,
-                "message": "管理者権限が必要です。"
-            }), 403
-
-        g.current_user = current_user
-
-        return function(*args, **kwargs)
-
-    return wrapper
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
