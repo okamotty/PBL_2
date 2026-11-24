@@ -1,22 +1,120 @@
-from flask import Flask, render_template, request, jsonify
+from flask import (
+    Flask,
+    render_template,
+    request,
+    jsonify,
+    session,
+    redirect,
+    url_for,
+    flash,
+    g
+)
 import os
+
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from functools import wraps
 
 # .envファイルの読み込み
 load_dotenv()
 
+# Flaskアプリケーションの初期化
 app = Flask(__name__)
 
-# Supabaseクライアントの初期化
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
+# セッションの暗号化キーを環境変数から取得
+app.secret_key = os.environ.get("FLASK_SECRET_KEY")
+
+# 秘密鍵の読み込み状態を確認
+print("秘密鍵の読み込み:", bool(app.secret_key))
+
+# 秘密鍵が読み込めているか確認
+if not app.secret_key:
+    raise RuntimeError(
+        "FLASK_SECRET_KEYが設定されていません。.envを確認してください。"
+    )
+
+# セッションのセキュリティ設定
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+# SupabaseのURLとキーを環境変数から取得
+url = os.environ.get("SUPABASE_URL")
+key = os.environ.get("SUPABASE_KEY")
+anon_key = os.environ.get("SUPABASE_ANON_KEY")
+
+# 既存のデータベース操作用クライアント
 supabase: Client = create_client(url, key)
+
+# ログイン・ユーザー登録用クライアント
+auth_supabase: Client = create_client(url, anon_key)
 
 @app.route('/')
 def index():
     return render_template('index.html')
+@app.route("/login", methods=["GET", "POST"])
+def login():
 
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        try:
+            response = auth_supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
+
+            session.clear()
+            session["access_token"] = response.session.access_token
+
+            return redirect(url_for("index"))
+
+        except Exception as error:
+            print("ログインエラー:", error)
+            flash("メールアドレスまたはパスワードが正しくありません。")
+
+    return render_template("login.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+
+    if request.method == "POST":
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        try:
+            response = auth_supabase.auth.sign_up({
+                "email": email,
+                "password": password
+            })
+
+            # メール確認が無効なら登録直後にログイン可能
+            if response.session:
+                session.clear()
+                session["access_token"] = (
+                    response.session.access_token
+                )
+
+                return redirect(url_for("index"))
+
+            flash(
+                "登録しました。メール確認が必要な場合は、"
+                "メールを確認してからログインしてください。"
+            )
+            return redirect(url_for("login"))
+
+        except Exception as error:
+            print("登録エラー:", error)
+            flash("アカウントを作成できませんでした。")
+
+    return render_template("register.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 # 避難所管理画面
 @app.route('/manage')
@@ -125,6 +223,82 @@ def update_status():
             "success": False,
             "message": "データの更新に失敗しました。"
         }), 500
+
+def get_current_user():
+    if "access_token" not in session:
+        return None
+
+    try:
+        # Supabaseにアクセストークンを確認してもらう
+        response = auth_supabase.auth.get_user(
+            session["access_token"]
+        )
+
+        user = response.user
+
+        if not user:
+            return None
+
+        # ユーザーの権限を取得
+        profile = (
+            supabase.table("user_profiles")
+            .select("user_id, role, designated_shelter_id")
+            .eq("user_id", user.id)
+            .single()
+            .execute()
+        )
+
+        return {
+            "user_id": user.id,
+            "email": user.email,
+            "role": profile.data["role"],
+            "designated_shelter_id": profile.data[
+                "designated_shelter_id"
+            ]
+        }
+
+    except Exception as error:
+        print("認証確認エラー:", error)
+        session.clear()
+        return None
+
+def login_required(function):
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        current_user = get_current_user()
+
+        if current_user is None:
+            return redirect(url_for("login"))
+
+        g.current_user = current_user
+
+        return function(*args, **kwargs)
+
+    return wrapper
+
+
+def admin_required(function):
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        current_user = get_current_user()
+
+        if current_user is None:
+            return jsonify({
+                "success": False,
+                "message": "ログインが必要です。"
+            }), 401
+
+        if current_user["role"] != "admin":
+            return jsonify({
+                "success": False,
+                "message": "管理者権限が必要です。"
+            }), 403
+
+        g.current_user = current_user
+
+        return function(*args, **kwargs)
+
+    return wrapper
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
