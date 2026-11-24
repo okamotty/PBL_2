@@ -97,6 +97,11 @@ async function loadShelters() {
                 }))
         };
 
+        // GeoJSONの変換結果を確認
+        console.log('GeoJSON全体:', shelterGeoJSON);
+        console.log('最初のFeature:', shelterGeoJSON.features[0]);
+        console.log('最初の避難所のcoordinates:',shelterGeoJSON.features[0]?.geometry?.coordinates);
+
         // 地図上に避難所を表示
         //displayShelters(geojson, statusData);
         displayShelters(shelterGeoJSON, statusData);
