@@ -362,10 +362,10 @@ function addLocateControl() {
         //const shelterLatlng=L.latLng(shelter.longitude,shelter.latitude);
         shelterGeoJSON.features.forEach(function(feature){
             const coordinates=feature.geometry.coordinates;
-            const shelterLatlng=L.latLng(
+            const shelterLatlng=[
                 coordinates[1],
                 coordinates[0]
-            );
+            ];
 
             return shelterLatlng
         })
@@ -480,3 +480,10 @@ addCrowdingLegend();
 
 // 避難所データを読み込む
 loadShelters();
+
+//エラー解決実験用
+const test = L.latLng(35.111092, 136.792548);
+console.log('テスト:', test);
+console.log('緯度:', test.lat);
+console.log('経度:', test.lng);
+console.log('Leafletのバージョン:', L.version);
