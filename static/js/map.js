@@ -360,7 +360,7 @@ function addLocateControl() {
         L.circle(event.latlng, radius).addTo(map);
 
         //const shelterLatlng=L.latLng(shelter.longitude,shelter.latitude);
-        shelterGeoJSON.features.forEach(function(feature){
+        /*shelterGeoJSON.features.forEach(function(feature){
             const coordinates=feature.geometry.coordinates;
             const shelterLatlng=[
                 coordinates[1],
@@ -368,11 +368,41 @@ function addLocateControl() {
             ];
 
             return shelterLatlng
-        })
+        })*/
 
-        console.log('避難所:', shelterLatlng);
+        shelterGeoJSON.features.forEach(function (feature) {
+
+            // GeoJSONから座標を取得
+            const coordinates = feature.geometry.coordinates;
+
+            console.log('coordinates:', coordinates);
+            console.log('緯度:', coordinates[1]);
+            console.log('経度:', coordinates[0]);
+
+            // Leaflet形式の座標を作成
+            const shelterLatlng = L.latLng(
+                Number(coordinates[1]),
+                Number(coordinates[0])
+            );
+
+            console.log('shelterLatlng:', shelterLatlng);
+            console.log('shelterLatlng.lat:', shelterLatlng.lat);
+            console.log('shelterLatlng.lng:', shelterLatlng.lng);
+
+            // 現在地の座標も確認
+            console.log('event.latlng:', event.latlng);
+            console.log('event.latlng.lat:', event.latlng.lat);
+            console.log('event.latlng.lng:', event.latlng.lng);
+
+            // 距離計算
+            const distance = event.latlng.distanceTo(shelterLatlng);
+
+            console.log('距離:', distance, 'm');
+
+        });
+
+        console.log('避難所の座標:',JSON.stringify(shelterLatlng));
         const distance=event.latlng.distanceTo(shelterLatlng);
-        console.log('距離:', distance, 'm');
 
         console.log(
             featuer.properties.name,
@@ -380,19 +410,6 @@ function addLocateControl() {
             distance,
             'm'
         );
-
-        /*shelterLatlng.forEach(function(shelter){
-            const distanceTargetShelter=event.latlng.distanceTo(shelter);
-            if(distanceTargetShelter<=1000){
-                L.circle(shelter,{
-                    color:'red',
-                    fillColor:'#f00',
-                    fillOpacity:0.2,
-                    radius:1000
-                }).addTo(map);
-                console.log('in');
-            };
-        });*/
         
         if(distance<=1000){
             L.circle(shelterLatlng,{
@@ -480,10 +497,3 @@ addCrowdingLegend();
 
 // 避難所データを読み込む
 loadShelters();
-
-//エラー解決実験用
-const test = L.latLng(35.111092, 136.792548);
-console.log('テスト:', test);
-console.log('緯度:', test.lat);
-console.log('経度:', test.lng);
-console.log('Leafletのバージョン:', L.version);
