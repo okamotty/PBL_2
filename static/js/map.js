@@ -467,7 +467,7 @@ function addLocateControl() {
                     color: 'red',
                     fillColor: '#f00',
                     fillOpacity: 0.2,
-                    radius: 1000
+                    radius: 100
                 }).addTo(shelterCircles);
             }
 
