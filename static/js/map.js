@@ -351,6 +351,7 @@ function addLocateControl() {
                     fillOpacity:0.2,
                     radius:1000
                 }).addTo(map);
+                console.log('in');
             };
         });
         
