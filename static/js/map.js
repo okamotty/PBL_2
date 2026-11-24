@@ -65,6 +65,8 @@ async function loadShelters() {
         }
 
         const shelters = await sheltersResponse.json();
+        console.log('APIから取得した避難所データ:', shelters);
+        console.log('最初の避難所:', shelters[0]);
         const statusData = await statusResponse.json();
 
         // Leafletで利用できるGeoJSON形式に変換
@@ -359,13 +361,17 @@ function addLocateControl() {
                 coordinates[1],
                 coordinates[0]
             );
+            console.log('避難所データ全体:', feature);
+            console.log('geometry:', feature.geometry);
+            console.log('coordinates:', feature.geometry?.coordinates);
+
             return shelterLatlng
         })
 
-        console.log('現在地:', event.latlng);
-        console.log('避難所:', shelterLatlng);
+        //console.log('現在地:', event.latlng);
+        //console.log('避難所:', shelterLatlng);
         const distance=event.latlng.distanceTo(shelterLatlng);
-        console.log('距離:', event.latlng.distanceTo(shelterLatlng));
+        //console.log('距離:', event.latlng.distanceTo(shelterLatlng));
 
         console.log(
             featuer.properties.name,
