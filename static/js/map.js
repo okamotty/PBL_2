@@ -343,16 +343,20 @@ function addLocateControl() {
         //避難所の円を設定
         const bounds=L.circle(latlng,{
             radius:1000
-        })
+        });
 
-        if(bounds.contains(latlng)){
+        const targetNow=L.latLng(event.latlng);
+        const distanceTargetShelter=bounds.getLatLng().distanceTo(targetNow);
+        const radiusShelter=bounds.getRadius();
+
+        if(distanceTargetShelter<=radiusShelter){
             L.circle(latlng,{
             color:'red',
             fillColor:'#f00',
             fillOpacity:0.2,
             radius:1000
             })
-        }
+        };
     });
 
 
