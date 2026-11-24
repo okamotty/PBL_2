@@ -359,6 +359,7 @@ function addLocateControl() {
                 coordinates[1],
                 coordinates[0]
             );
+            return shelterLatlng
         })
 
         const distance=event.latlng.distanceTo(shelterLatlng);
