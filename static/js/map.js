@@ -96,8 +96,8 @@ async function loadShelters() {
         };
 
         // 地図上に避難所を表示
-        //displayShelters(geojson, statusData);
-        displayShelters(shelterGeoJSON, statusData);
+        displayShelters(geojson, statusData);
+        //displayShelters(shelterGeoJSON, statusData);
 
         loading.classList.add('hidden');
 
