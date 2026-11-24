@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新規登録 | 避難所ステータスサービス</title>
+</head>
+<body>
+    <h1>避難所ステータスサービス</h1>
+    <h2>新規登録</h2>
+
+    {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+
+    <form method="POST">
+        <div>
+            <label>メールアドレス</label>
+            <input type="email" name="email" required>
+        </div>
+
+        <div>
+            <label>パスワード（6文字以上）</label>
+            <input type="password" name="password"
+                   minlength="6" required>
+        </div>
+
+        <button type="submit">アカウントを作成</button>
+    </form>
+
+    <p>
+        すでにアカウントを持っている方は
+        <a href="{{ url_for('login') }}">ログイン</a>
+    </p>
+</body>
+</html>
