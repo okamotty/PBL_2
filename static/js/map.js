@@ -342,11 +342,11 @@ function addLocateControl() {
 
         //避難所の円を設定
         const bounds=L.circle(latlng,{
-            radius:10000
+            radius:1000
         })
 
-        if(bounds.contains(shelter.longitude,shelter.latitude)){
-            L.circle([shelter.longitude,shelter.latitude],{
+        if(bounds.contains(latlng)){
+            L.circle(latlng,{
             color:'red',
             fillColor:'#f00',
             fillOpacity:0.2,
