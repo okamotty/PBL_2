@@ -329,7 +329,7 @@ function addLocateControl() {
 
     map.addControl(new LocateControl());
 
-    const shelterLatlng=null;
+    const shelterLatlng=[];
 
     // 現在地の取得に成功した場合
     map.on('locationfound', function (event) {
