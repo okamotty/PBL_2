@@ -274,20 +274,6 @@ function displayShelters(geojson, statusData) {
     shelterLayer.addTo(map);
 }
 
-//追加実験用
-const testCurrent = L.latLng(
-    event.latlng.lat,
-    event.latlng.lng
-);
-const testShelter = L.latLng(
-    35.111092,
-    136.792548
-);
-console.log(
-    'テスト距離:',
-    testCurrent.distanceTo(testShelter)
-);
-
 
 // ========================================
 // 現在地取得機能
@@ -414,6 +400,20 @@ function addLocateControl() {
             console.log('距離:', distance, 'm');
 
         });*/
+
+            //追加実験用
+        const testCurrent = L.latLng(
+            event.latlng.lat,
+            event.latlng.lng
+        );
+        const testShelter = L.latLng(
+            35.111092,
+            136.792548
+        );
+        console.log(
+            'テスト距離:',
+            testCurrent.distanceTo(testShelter)
+        );
 
         shelterGeoJSON.features.forEach(function (feature, index) {
 
