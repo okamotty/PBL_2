@@ -370,7 +370,7 @@ function addLocateControl() {
             return shelterLatlng
         })*/
 
-        shelterGeoJSON.features.forEach(function (feature) {
+        /*shelterGeoJSON.features.forEach(function (feature) {
 
             // GeoJSONから座標を取得
             const coordinates = feature.geometry.coordinates;
@@ -399,9 +399,67 @@ function addLocateControl() {
 
             console.log('距離:', distance, 'm');
 
+        });*/
+
+        shelterGeoJSON.features.forEach(function (feature, index) {
+
+            console.log('処理中の避難所番号:', index);
+
+            // geometryが存在するか確認
+            if (!feature || !feature.geometry) {
+                console.warn('geometryが存在しません:', feature);
+                return;
+            }
+
+            const coordinates = feature.geometry.coordinates;
+
+            // coordinatesが正しいか確認
+            if (
+                !Array.isArray(coordinates) ||
+                coordinates.length < 2 ||
+                coordinates[0] == null ||
+                coordinates[1] == null
+            ) {
+                console.warn('座標が不正です:', feature);
+            return;
+            }
+
+            // 避難所の座標を生成
+            const shelterLatlng = L.latLng(
+                Number(coordinates[1]),
+                Number(coordinates[0])
+            );
+
+            // 座標が正常か確認
+            if (
+                !Number.isFinite(shelterLatlng.lat) ||
+                !Number.isFinite(shelterLatlng.lng)
+            ) {
+                console.warn('Leaflet座標が不正です:', feature);
+                return;
+            }
+
+            console.log('避難所:', feature.properties.name);
+            console.log('避難所の座標:', shelterLatlng);
+
+            // 距離計算
+            const distance = event.latlng.distanceTo(shelterLatlng);
+
+            console.log('距離:', distance, 'm');
+
+            // 1000m以内なら円を表示
+            if (distance <= 1000) {
+                L.circle(shelterLatlng, {
+                    color: 'red',
+                    fillColor: '#f00',
+                    fillOpacity: 0.2,
+                    radius: 1000
+                }).addTo(shelterCircles);
+            }
+
         });
 
-        console.log('避難所の座標:',JSON.stringify(shelterLatlng));
+        /*console.log('避難所の座標:',JSON.stringify(shelterLatlng));
         const distance=event.latlng.distanceTo(shelterLatlng);
 
         console.log(
@@ -418,7 +476,7 @@ function addLocateControl() {
                 fillOpacity:0.2,
                 radius:1000
             }).addTo(shelterCircles);
-        };
+        };*/
     });
 
 
@@ -497,3 +555,16 @@ addCrowdingLegend();
 
 // 避難所データを読み込む
 loadShelters();
+
+const testCurrent = L.latLng(
+    event.latlng.lat,
+    event.latlng.lng
+);
+const testShelter = L.latLng(
+    35.111092,
+    136.792548
+);
+console.log(
+    'テスト距離:',
+    testCurrent.distanceTo(testShelter)
+);
