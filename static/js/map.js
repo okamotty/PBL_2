@@ -47,6 +47,9 @@ function escapeHTML(value) {
 // 避難所データの取得
 // ========================================
 
+let shelterGeoJSON=null;
+const shelterCircles=L.layerGroup().addTo(map);
+
 async function loadShelters() {
     const loading = document.getElementById('loading');
 
@@ -65,7 +68,7 @@ async function loadShelters() {
         const statusData = await statusResponse.json();
 
         // Leafletで利用できるGeoJSON形式に変換
-        const geojson = {
+        shelterGeoJSON = {
             type: 'FeatureCollection',
 
             features: shelters
@@ -329,6 +332,13 @@ function addLocateControl() {
     // 現在地の取得に成功した場合
     map.on('locationfound', function (event) {
 
+        if(shelterGeoJSON===null){
+            console.log('避難所データがまだ読み込まれていません。');
+            return;
+        }
+
+        shelterCircles.clearLayers();
+
         const radius = event.accuracy / 2;
 
         L.marker(event.latlng)
@@ -340,9 +350,25 @@ function addLocateControl() {
 
         L.circle(event.latlng, radius).addTo(map);
 
-        const shelterLatlng=L.latLng(shelter.longitude,shelter.latitude);
-        
-        shelterLatlng.forEach(function(shelter){
+        //const shelterLatlng=L.latLng(shelter.longitude,shelter.latitude);
+        shelterGeoJSON.features.forEach(function(feature){
+            const coordinates=feature.geometry.coordinates;
+            const shelterLatlng=L.latLng(
+                coordinates[1],
+                coordinates[0]
+            );
+        })
+
+        const distance=event.latlng.distanceTo(shelterLatlng);
+
+        console.log(
+            featuer.properties.name,
+            '距離:',
+            distance,
+            'm'
+        );
+
+        /*shelterLatlng.forEach(function(shelter){
             const distanceTargetShelter=event.latlng.distanceTo(shelter);
             if(distanceTargetShelter<=1000){
                 L.circle(shelter,{
@@ -353,9 +379,16 @@ function addLocateControl() {
                 }).addTo(map);
                 console.log('in');
             };
-        });
+        });*/
         
-        
+        if(distance<=1000){
+            L.circle(shelterLatlng,{
+                color:'red',
+                fillColor:'#f00',
+                fillOpacity:0.2,
+                radius:1000
+            }).addTo(shelterCircles);
+        };
     });
 
 
