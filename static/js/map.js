@@ -362,7 +362,10 @@ function addLocateControl() {
             return shelterLatlng
         })
 
+        console.log('現在地:', event.latlng);
+        console.log('避難所:', shelterLatlng);
         const distance=event.latlng.distanceTo(shelterLatlng);
+        console.log('距離:', event.latlng.distanceTo(shelterLatlng));
 
         console.log(
             featuer.properties.name,
