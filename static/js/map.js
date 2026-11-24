@@ -351,7 +351,7 @@ function addLocateControl() {
         //const radiusShelter=bounds.getRadius();
 
         if(distanceTargetShelter<=1000){
-            L.circle(latlng,{
+            L.circle(shelterLatlng,{
             color:'red',
             fillColor:'#f00',
             fillOpacity:0.2,
