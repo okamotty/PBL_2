@@ -212,6 +212,17 @@ def manage():
 
     return render_template("manage.html")
 
+# 物資更新画面
+@app.route('/manage/supplies')
+@login_required
+def manage_supplies():
+
+    # 避難者は物資更新画面を利用できない
+    if g.current_user["role"] != "admin":
+        return redirect(url_for("index"))
+
+    return render_template("supplies.html")
+
 # Supabaseから避難所の基本情報を取得するAPI
 @app.route('/api/shelters', methods=['GET'])
 @login_required

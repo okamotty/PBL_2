@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>避難所管理画面</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&display=swap">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/theme.css') }}">
     <link rel="stylesheet"
           href="{{ url_for('static', filename='css/manage.css') }}">
 </head>
@@ -78,55 +85,123 @@
 
     </main>
 
-    <!-- 編集画面 -->
-    <div id="edit-modal" class="modal hidden">
+    <!-- 人数変更画面（PCはダイアログ、スマホは全画面） -->
+    <div id="people-modal" class="people-modal hidden">
 
-        <div class="modal-content">
+        <div class="people-dialog"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="people-title">
 
-            <h2>避難所情報の編集</h2>
+            <div class="people-header">
+                <button type="button"
+                        class="people-back sp-only"
+                        data-close-people
+                        aria-label="一覧へ戻る">←</button>
 
-            <p id="edit-shelter-name"></p>
+                <h2 id="people-title">
+                    <span class="pc-only">避難者数を更新</span>
+                    <span class="sp-only">人数変更画面</span>
+                </h2>
 
-            <input type="hidden" id="edit-common-id">
-
-            <label>
-                避難人数（人）
-                <input type="number" id="edit-people" min="0">
-            </label>
-
-            <label>
-                収容人数（人）
-                <input type="number" id="edit-capacity" min="0">
-            </label>
-
-            <label>
-                水（L）
-                <input type="number" id="edit-water" min="0">
-            </label>
-
-            <label>
-                非常食（食）
-                <input type="number" id="edit-food" min="0">
-            </label>
-
-            <label>
-                毛布（枚）
-                <input type="number" id="edit-blanket" min="0">
-            </label>
-
-            <div class="modal-buttons">
-                <button id="cancel-button" class="cancel-button">
-                    キャンセル
-                </button>
-
-                <button id="save-button" class="save-button">
-                    更新する
-                </button>
+                <button type="button"
+                        class="people-close pc-only"
+                        data-close-people
+                        aria-label="閉じる">✕</button>
             </div>
 
+            <div class="people-body">
+
+                <!-- 現在の状況 -->
+                <div class="people-current" id="people-current-card">
+                    <div class="people-current-top">
+                        <p class="people-shelter-name" id="people-shelter-name"></p>
+                        <span class="people-badge" id="people-badge"></span>
+                    </div>
+
+                    <p class="people-current-label sp-only">現在の避難者数</p>
+
+                    <div class="people-current-bottom">
+                        <p class="people-count">
+                            <strong id="people-current-count">0</strong>
+                            <span id="people-capacity-text"></span>
+                        </p>
+
+                        <div class="people-meter">
+                            <div class="people-meter-track">
+                                <div class="people-meter-fill" id="people-meter-fill"></div>
+                            </div>
+                            <p class="people-meter-rate" id="people-rate"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 新しい避難者数 -->
+                <div class="people-editor">
+                    <label class="people-section-title" for="people-input">
+                        <span class="pc-only">新しい避難者数</span>
+                        <span class="sp-only">新しい避難者数を入力</span>
+                    </label>
+
+                    <div class="people-stepper">
+                        <button type="button" class="step-button" data-step="-10">−10</button>
+                        <button type="button" class="step-button" data-step="-1">−1</button>
+
+                        <input type="number"
+                               id="people-input"
+                               class="people-input"
+                               inputmode="numeric"
+                               min="0"
+                               step="1">
+
+                        <button type="button" class="step-button" data-step="1">+1</button>
+                        <button type="button" class="step-button" data-step="10">+10</button>
+                    </div>
+
+                    <p class="people-hint sp-only">タップで増減 / 数値を直接入力</p>
+
+                    <div class="people-chips">
+                        <button type="button" class="people-chip plus" data-step="20">+20人</button>
+                        <button type="button" class="people-chip plus" data-step="50">+50人</button>
+                        <button type="button" class="people-chip plus" data-step="100">+100人</button>
+                        <button type="button" class="people-chip minus" data-step="-20">−20人</button>
+                        <button type="button" class="people-chip minus" data-step="-50">−50人</button>
+                        <button type="button" class="people-chip minus" data-step="-100">−100人</button>
+                    </div>
+                </div>
+
+                <!-- 収容人数（混雑度の計算に使う） -->
+                <label class="people-field-label" for="people-capacity-input">
+                    収容人数
+                </label>
+                <div class="people-field">
+                    <input type="number"
+                           id="people-capacity-input"
+                           inputmode="numeric"
+                           min="0"
+                           step="1">
+                    <span>人</span>
+                </div>
+
+                <p class="people-note sp-only">
+                    ⚠ 変更後は自動的に混雑度・段階が更新されます
+                </p>
+
+                <div class="people-actions">
+                    <button type="button"
+                            class="people-cancel"
+                            data-close-people>キャンセル</button>
+
+                    <button type="button"
+                            class="people-save"
+                            id="people-save">変更を確定する</button>
+                </div>
+
+            </div>
         </div>
     </div>
 
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
     <script src="{{ url_for('static', filename='js/manage.js') }}"></script>
 
 </body>

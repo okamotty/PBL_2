@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物資更新 | 避難所ステータスシステム</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&display=swap">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/supplies.css') }}">
+</head>
+<body>
+
+    <header class="app-header">
+        <!-- PC -->
+        <div class="app-brand pc-only">
+            <p class="app-title">避難所ステータスシステム</p>
+            <p class="app-subtitle">行政・スタッフ管理画面</p>
+        </div>
+
+        <nav class="app-nav pc-only" aria-label="管理メニュー">
+            <a href="{{ url_for('manage') }}">リスト</a>
+            <a href="{{ url_for('manage_supplies') }}"
+               class="active"
+               aria-current="page">物資管理</a>
+        </nav>
+
+        <a href="{{ url_for('logout') }}" class="app-logout pc-only">ログアウト</a>
+
+        <!-- スマホ -->
+        <a href="{{ url_for('manage') }}" class="app-back sp-only">← 戻る</a>
+        <p class="app-page-title sp-only">物資更新</p>
+        <p class="app-shelter sp-only" id="header-shelter-name"></p>
+    </header>
+
+    <main class="supplies-main">
+
+        <!-- 集計（PCのみ） -->
+        <section class="summary-cards pc-only" aria-label="集計">
+            <div class="summary-card" style="--accent: #ffffff;">
+                <strong id="sum-shelters">—</strong>
+                <span>管理中の避難所</span>
+                <small>登録済み</small>
+            </div>
+
+            <div class="summary-card" style="--accent: var(--warn);">
+                <strong id="sum-attention">—</strong>
+                <span>要対応（混雑/物資）</span>
+                <small>今すぐ確認を</small>
+            </div>
+
+            <div class="summary-card" style="--accent: #6699ff;">
+                <strong id="sum-people">—</strong>
+                <span>総避難者数</span>
+                <small id="sum-capacity">定員 —</small>
+            </div>
+
+            <div class="summary-card" style="--accent: var(--ok);">
+                <strong id="sum-sufficiency">—</strong>
+                <span>物資充足率（平均）</span>
+                <small>水・食料・毛布</small>
+            </div>
+        </section>
+
+        <section class="supply-panel">
+            <h1 class="panel-title pc-only">物資在庫の更新</h1>
+            <p class="panel-desc pc-only">選択した避難所の物資在庫を更新します</p>
+
+            <!-- 避難所の選択 -->
+            <div class="shelter-picker">
+                <div class="picker-display" aria-hidden="true">
+                    <span class="picker-name" id="picker-name">読み込み中...</span>
+                    <span class="picker-stats pc-only" id="picker-stats-pc"></span>
+                    <span class="picker-stats sp-only" id="picker-stats-sp"></span>
+                    <span class="picker-arrow">▼</span>
+                </div>
+                <select id="shelter-select" aria-label="避難所を選択" disabled></select>
+            </div>
+
+            <hr class="panel-divider pc-only">
+
+            <p class="panel-hint sp-only">
+                在庫数・目標日数を入力して「更新」を押してください
+            </p>
+
+            <p id="loading" class="loading">避難所情報を読み込んでいます...</p>
+
+            <div class="supply-table hidden" id="supply-table">
+                <div class="supply-head pc-only">
+                    <span>物資名</span>
+                    <span>現在の在庫</span>
+                    <span>消費量/人・日</span>
+                    <span>推定残日数</span>
+                    <span>必要日数</span>
+                    <span>必要追加量</span>
+                    <span>状態</span>
+                </div>
+
+                <div id="supply-rows"></div>
+            </div>
+
+            <p class="supply-formula pc-only">
+                ※ 推定残日数 ＝ 在庫量 ÷ （避難者数 × 1人1日消費量）
+            </p>
+
+            <div class="supply-footer">
+                <p id="save-message" class="save-message" role="status"></p>
+
+                <div class="supply-actions">
+                    <button type="button"
+                            id="cancel-button"
+                            class="btn-cancel pc-only">キャンセル</button>
+
+                    <button type="button"
+                            id="save-button"
+                            class="btn-save"
+                            disabled>物資情報を更新する</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/supplies.js') }}"></script>
+
+</body>
+</html>
